@@ -13,4 +13,5 @@ extern Model *modelRepeater;
 extern Model *modelWavBank;
 extern Model *modelXY;
 extern Model *modelGhosts;
+extern Model *modelGoblins;
 extern Model *modelEquationComposer;

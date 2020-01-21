@@ -13,6 +13,7 @@ void init(Plugin* p) {
 	p->addModel(modelWavBank);
 	p->addModel(modelXY);
 	p->addModel(modelGhosts);
+	p->addModel(modelGoblins);
 	p->addModel(modelEquationComposer);
 
 	// Any other plugin initialization may go here.
