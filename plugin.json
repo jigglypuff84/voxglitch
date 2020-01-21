@@ -14,6 +14,12 @@
     "changelogUrl": "",
     "modules": [
     {
+        "slug": "equation_composer",
+        "name": "Equation Composer",
+        "description": "Bytebeat Player",
+        "tags": []
+    },
+    {
         "slug": "ghosts",
         "name": "Ghosts",
         "description": "Granular synthesis based sample player/scanner.",
@@ -31,7 +37,6 @@
         "description": "Sample player that can load and switch between all .wav files in a folder.",
         "tags": ["Sampler"]
     },
-
     {
         "slug": "xy",
         "name": "XY",
