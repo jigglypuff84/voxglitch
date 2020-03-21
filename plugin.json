@@ -50,6 +50,12 @@
         "tags": ["Granular", "Sampler"]
     },
     {
+        "slug": "transitionsequencer",
+        "name": "Transition Sequencer",
+        "description": "CV sequencer for long modulations over time",
+        "tags": ["Sequencer"]
+    },
+    {
         "slug": "repeater",
         "name": "Repeater",
         "description": "Looping sample player with playback offset control.",
