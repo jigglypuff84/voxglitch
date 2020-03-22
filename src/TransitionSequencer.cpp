@@ -53,9 +53,9 @@ struct TimelineSequencer
     // constructor
     TimelineSequencer()
     {
-        points.insert(points.begin(), Vec(100, 100.50));
-        points.insert(points.begin(), Vec(220, 120.00));
-        points.insert(points.begin(), Vec(300, 60.00));
+        points.push_back(Vec(100, 100.50));
+        points.push_back(Vec(220, 120.00));
+        points.push_back(Vec(300, 60.00));
     }
 };
 
@@ -229,6 +229,8 @@ struct TimelineSequencerWidget : TransparentWidget
     Vec drag_position;
     unsigned int selected_point_index = 0;
     bool dragging_point = false;
+    unsigned int hover_point_index = 0;
+    bool hovering_over_point = true;
 
     TimelineSequencerWidget()
     {
@@ -254,8 +256,7 @@ struct TimelineSequencerWidget : TransparentWidget
             float previous_x = -1;
             float previous_y = -1;
 
-            //for (Vec position_vector : module->sequencer.points)
-            //{
+            // Draw all the lines first
             for(std::size_t i=0; i < module->sequencer.points.size(); i++)
             {
                 // for (std::pair<std::double, float> element : module->sequencer.points) {
@@ -277,25 +278,38 @@ struct TimelineSequencerWidget : TransparentWidget
                 	nvgStroke(vg);
                 }
 
+                previous_x = draw_position_x;
+                previous_y = draw_position_y;
+            }
+
+            for(std::size_t i=0; i < module->sequencer.points.size(); i++)
+            {
+                // for (std::pair<std::double, float> element : module->sequencer.points) {
+        		// Accessing KEY from element
+        		float time = module->sequencer.points[i].x;
+        		float cv_value = module->sequencer.points[i].y;
+
+                // calculate position based on time and the position of the
+                // drawing window.
+                float draw_position_x = time;  // TODO: finish this
+                float draw_position_y = cv_value;
+
                 // (outer circle)
                 nvgBeginPath(vg);
                 nvgCircle(vg, draw_position_x, draw_position_y, 10);
                 nvgFillColor(vg, nvgRGBA(156, 167, 185, 20));
                 nvgFill(vg);
 
+                bool highlight_point = false;
+                if(dragging_point && selected_point_index == i) highlight_point = true;
+                if(hovering_over_point && hover_point_index == i) highlight_point = true;
+
                 // (inner circle)
                 nvgBeginPath(vg);
                 nvgCircle(vg, draw_position_x, draw_position_y, 5);
-                if(dragging_point && selected_point_index == i) {
-                    nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
-                }
-                else {
-                    nvgFillColor(vg, nvgRGBA(156, 167, 185, 255));
-                }
+                nvgFillColor(vg, nvgRGBA(156, 167, 185, 255));
+                if(highlight_point) nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
                 nvgFill(vg);
-
-                previous_x = draw_position_x;
-                previous_y = draw_position_y;
         	}
 
 
@@ -350,23 +364,87 @@ struct TimelineSequencerWidget : TransparentWidget
             e.consume(this);
 			drag_position = e.pos;
 
-            // see if the user is selecting a point
-            for(std::size_t i=0; i<module->sequencer.points.size(); i++)
+            if(e.mods == GLFW_MOD_SHIFT)
             {
-                // for (std::pair<std::double, float> element : module->sequencer.points) {
-        		// Accessing KEY from element
-        		float time = module->sequencer.points[i].x;
-        		// float cv_value = module->sequencer.points[i].y;
+                // TODO: replace drag_position in the followin line of code
+                // with the position computed given the draw window
 
-                // calculate position based on time and the position of the
-                // drawing window.
-                float draw_position_x = time;  // TODO: finish this
-                // float draw_position_y = cv_value;
+                unsigned int number_of_points = module->sequencer.points.size();
+                int insert_at_location = 0;
 
-                if(draw_position_x > (drag_position.x - 10) && draw_position_x < (drag_position.x + 10))
+                if(number_of_points == 0)
                 {
-                    selected_point_index = i;
-                    dragging_point = true;
+                    insert_at_location = 0;
+                }
+                // If adding a point to the beginning
+                else if(drag_position.x < module->sequencer.points[0].x)
+                {
+                    insert_at_location = 0;
+                }
+                // If adding a point to the end
+                else if(drag_position.x > module->sequencer.points.back().x)
+                {
+                    insert_at_location = module->sequencer.points.size();
+                }
+                /*
+                else if(number_of_points == 1)
+                {
+                    if(drag_position.x < module->sequencer.points[0].x)
+                    {
+                        insert_at_location = 0;
+                        module->sequencer.points.insert(module->sequencer.points.begin(), drag_position);
+                    }
+                    else
+                    {
+                        insert_at_location = 1;
+                        module->sequencer.points.push_back(drag_position);
+                    }
+                }
+                */
+                // If adding a point somewhere in the middle
+                else
+                {
+                    for(std::size_t i=0; i<module->sequencer.points.size() - 1; i++)
+                    {
+                        if((drag_position.x > module->sequencer.points[i].x) && (drag_position.x < module->sequencer.points[i+1].x))
+                        {
+                            insert_at_location = i + 1;
+                        }
+                    }
+                }
+
+
+                // This cannot be done while iterating over the vector
+                module->sequencer.points.insert(module->sequencer.points.begin() + insert_at_location, drag_position);
+
+                // Begin dragging
+                selected_point_index = insert_at_location;
+                dragging_point = true;
+            }
+            else
+            {
+                // see if the user is selecting a point
+                for(std::size_t i=0; i<module->sequencer.points.size(); i++)
+                {
+                    // for (std::pair<std::double, float> element : module->sequencer.points) {
+            		// Accessing KEY from element
+            		float time = module->sequencer.points[i].x;
+            		float cv_value = module->sequencer.points[i].y;
+
+                    // calculate position based on time and the position of the
+                    // drawing window.
+                    float draw_position_x = time;  // TODO: finish this
+                    float draw_position_y = cv_value;
+
+                    if(draw_position_x > (drag_position.x - 16) &&
+                        draw_position_x < (drag_position.x + 16) &&
+                        draw_position_y > (drag_position.y - 16) &&
+                        draw_position_y < (drag_position.y + 16)
+                    )
+                    {
+                        selected_point_index = i;
+                        dragging_point = true;
+                    }
                 }
             }
 		}
@@ -391,6 +469,44 @@ struct TimelineSequencerWidget : TransparentWidget
         }
 	}
 
+    void onLeave(const event::Leave &e) override
+    {
+        TransparentWidget::onLeave(e);
+    }
+
+    void onHover(const event::Hover& e) override
+    {
+		TransparentWidget::onHover(e);
+		e.consume(this);
+
+        // double zoom = std::pow(2.f, settings::zoom);
+		Vec hover_position = e.pos;
+        hovering_over_point = false;
+
+        // TODO: change this to only iterate over visible points
+        for(std::size_t i=0; i<module->sequencer.points.size(); i++)
+        {
+            // for (std::pair<std::double, float> element : module->sequencer.points) {
+            // Accessing KEY from element
+            float time = module->sequencer.points[i].x;
+            float cv_value = module->sequencer.points[i].y;
+
+            // calculate position based on time and the position of the
+            // drawing window.
+            float point_position_x = time;  // TODO: finish this
+            float point_position_y = cv_value;
+
+            if(point_position_x > (hover_position.x - 16) &&
+                point_position_x < (hover_position.x + 16) &&
+                point_position_y > (hover_position.y - 16) &&
+                point_position_y < (hover_position.y + 16)
+            )
+            {
+                hover_point_index = i;
+                hovering_over_point = true;
+            }
+        }
+	}
 };
 
 struct TransitionSequencerWidget : ModuleWidget
