@@ -2,7 +2,10 @@
 // Voxglitch "Transition Sequencer" module for VCV Rack
 // by Bret Truchan
 //
-
+// TODO: When dragging points, have 'crosshairs' show up that extend to the
+// x/y legends.
+// TODO: When hovering under or above a point, create a vertical line at that
+//  point.  If clicking in this state, reposition point up or down.
 
 #include "plugin.hpp"
 #include "osdialog.h"
@@ -44,14 +47,15 @@ struct TimelineSequencer
 {
     // "points" is a map with the keys representing milliseconds and the value
     // representing the VC value at that position in time.
-    std::map<double, float> points;
+    // std::map<double, float> points;
+    std::vector<Vec> points;
 
     // constructor
     TimelineSequencer()
     {
-        points.insert({ 100, 100.50 });
-        points.insert({ 220, 120.00 });
-        points.insert({ 300, 60.00 });
+        points.insert(points.begin(), Vec(100, 100.50));
+        points.insert(points.begin(), Vec(220, 120.00));
+        points.insert(points.begin(), Vec(300, 60.00));
     }
 };
 
@@ -223,6 +227,8 @@ struct TimelineSequencerWidget : TransparentWidget
 {
     TransitionSequencer *module;
     Vec drag_position;
+    unsigned int selected_point_index = 0;
+    bool dragging_point = false;
 
     TimelineSequencerWidget()
     {
@@ -248,41 +254,48 @@ struct TimelineSequencerWidget : TransparentWidget
             float previous_x = -1;
             float previous_y = -1;
 
-            for (auto const& pair : module->sequencer.points)
+            //for (Vec position_vector : module->sequencer.points)
+            //{
+            for(std::size_t i=0; i < module->sequencer.points.size(); i++)
             {
                 // for (std::pair<std::double, float> element : module->sequencer.points) {
         		// Accessing KEY from element
-        		double time = pair.first;
-        		float cv_value = pair.second;
+        		float time = module->sequencer.points[i].x;
+        		float cv_value = module->sequencer.points[i].y;
 
                 // calculate position based on time and the position of the
                 // drawing window.
-                float x = (float) time;
-                float y = cv_value;
+                float draw_position_x = time;  // TODO: finish this
+                float draw_position_y = cv_value;
 
                 if(previous_x >= 0)
                 {
                     nvgBeginPath(vg);
                     nvgMoveTo(vg, previous_x, previous_y);
-                	nvgLineTo(vg, x, y);
+                	nvgLineTo(vg, draw_position_x, draw_position_y);
                 	nvgStrokeColor(vg, nvgRGBA(156, 167, 185, 255));
                 	nvgStroke(vg);
                 }
 
                 // (outer circle)
                 nvgBeginPath(vg);
-                nvgCircle(vg, x, y, 10);
+                nvgCircle(vg, draw_position_x, draw_position_y, 10);
                 nvgFillColor(vg, nvgRGBA(156, 167, 185, 20));
                 nvgFill(vg);
 
                 // (inner circle)
                 nvgBeginPath(vg);
-                nvgCircle(vg, x, y, 5);
-                nvgFillColor(vg, nvgRGBA(156, 167, 185, 255));
+                nvgCircle(vg, draw_position_x, draw_position_y, 5);
+                if(dragging_point && selected_point_index == i) {
+                    nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
+                }
+                else {
+                    nvgFillColor(vg, nvgRGBA(156, 167, 185, 255));
+                }
                 nvgFill(vg);
 
-                previous_x = x;
-                previous_y = y;
+                previous_x = draw_position_x;
+                previous_y = draw_position_y;
         	}
 
 
@@ -329,6 +342,55 @@ struct TimelineSequencerWidget : TransparentWidget
 
         nvgRestore(vg);
     }
+
+    void onButton(const event::Button &e) override
+    {
+		if(e.button == GLFW_MOUSE_BUTTON_LEFT && e.action == GLFW_PRESS)
+		{
+            e.consume(this);
+			drag_position = e.pos;
+
+            // see if the user is selecting a point
+            for(std::size_t i=0; i<module->sequencer.points.size(); i++)
+            {
+                // for (std::pair<std::double, float> element : module->sequencer.points) {
+        		// Accessing KEY from element
+        		float time = module->sequencer.points[i].x;
+        		// float cv_value = module->sequencer.points[i].y;
+
+                // calculate position based on time and the position of the
+                // drawing window.
+                float draw_position_x = time;  // TODO: finish this
+                // float draw_position_y = cv_value;
+
+                if(draw_position_x > (drag_position.x - 10) && draw_position_x < (drag_position.x + 10))
+                {
+                    selected_point_index = i;
+                    dragging_point = true;
+                }
+            }
+		}
+
+        if(e.button == GLFW_MOUSE_BUTTON_LEFT && e.action == GLFW_RELEASE)
+        {
+            dragging_point = false;
+        }
+	}
+
+	void onDragMove(const event::DragMove &e) override
+    {
+		TransparentWidget::onDragMove(e);
+        double zoom = std::pow(2.f, settings::zoom);
+		drag_position = drag_position.plus(e.mouseDelta.div(zoom));
+
+        if(dragging_point && module->sequencer.points.size() > 0)
+        {
+            // TODO: This will need to take into consideration the draw window
+            module->sequencer.points[selected_point_index].x = drag_position.x;
+            module->sequencer.points[selected_point_index].y = drag_position.y;
+        }
+	}
+
 };
 
 struct TransitionSequencerWidget : ModuleWidget
