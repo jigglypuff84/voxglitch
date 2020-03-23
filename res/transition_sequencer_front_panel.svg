@@ -15,7 +15,7 @@
    version="1.1"
    id="svg11003"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
-   sodipodi:docname="transition_front_panel.svg">
+   sodipodi:docname="transition_sequencer_front_panel.svg">
   <defs
      id="defs10997" />
   <sodipodi:namedview
@@ -26,8 +26,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.0000001"
-     inkscape:cx="338.87424"
-     inkscape:cy="312.68583"
+     inkscape:cx="473.18115"
+     inkscape:cy="115.68473"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -36,8 +36,8 @@
      fit-margin-right="0"
      fit-margin-bottom="0"
      inkscape:window-width="1920"
-     inkscape:window-height="1017"
-     inkscape:window-x="-8"
+     inkscape:window-height="1137"
+     inkscape:window-x="1912"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
      units="mm"
@@ -145,7 +145,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -342,12 +342,12 @@
          inkscape:connector-curvature="0" />
     </g>
     <rect
-       style="display:inline;fill:#28282a;fill-opacity:1;stroke-width:0.46351728"
+       style="display:inline;fill:#28282a;fill-opacity:1;stroke-width:0.46351731"
        id="rect438-7"
        width="171.02382"
-       height="89.112503"
+       height="76.57756"
        x="70.356651"
-       y="-142.3578"
+       y="-129.82286"
        ry="1.0293081"
        transform="scale(1,-1)"
        rx="1.0897758" />
@@ -677,5 +677,15 @@
          x="138.15463"
          y="51.529648"
          style="fill:#808080;stroke-width:0.26458332">TRANSITION SEQUNCER</tspan></text>
+    <rect
+       style="display:inline;fill:#28282a;fill-opacity:1;stroke-width:0.46351725"
+       id="rect438-7-47"
+       width="171.02382"
+       height="10.915998"
+       x="70.356651"
+       y="-142.3578"
+       ry="1.0293082"
+       transform="scale(1,-1)"
+       rx="1.0897758" />
   </g>
 </svg>

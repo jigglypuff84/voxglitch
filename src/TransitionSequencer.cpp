@@ -21,12 +21,16 @@
 
 // Constants for patterns
 #define DRAW_AREA_WIDTH 486.0
-#define DRAW_AREA_HEIGHT 214.0
+#define DRAW_AREA_HEIGHT 206.0
 #define BAR_HEIGHT 214.0
 #define BAR_HORIZONTAL_PADDING .8
 #define DRAW_AREA_POSITION_X 9
 #define DRAW_AREA_POSITION_Y 9.5
 
+#define MINI_MAP_POSITION_X 9
+#define MINI_MAP_POSITION_Y 83.55
+#define MINI_MAP_DRAW_AREA_WIDTH 486.0
+#define MINI_MAP_DRAW_AREA_HEIGHT 36.0
 
 #define TOOLTIP_WIDTH 33.0
 #define TOOLTIP_HEIGHT 20.0
@@ -376,48 +380,15 @@ struct TimelineSequencerWidget : TransparentWidget
                 nvgFillColor(vg, nvgRGBA(156, 167, 185, 255));
                 if(highlight_point) nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
                 nvgFill(vg);
+
+                // testing draw area
+
+                nvgBeginPath(vg);
+                nvgRect(vg, 0, 0, DRAW_AREA_WIDTH, DRAW_AREA_HEIGHT);
+                nvgFillColor(vg, nvgRGBA(120, 20, 20, 100));
+                nvgFill(vg);
+
         	}
-
-
-            // draw lines first
-            /*
-            nvgBeginPath(vg);
-            nvgMoveTo(vg, 100, 100);
-        	nvgLineTo(vg, 220, 120);
-        	nvgStrokeColor(vg, nvgRGBA(156, 167, 185, 255));
-        	nvgStroke(vg);
-            */
-
-            /*
-            // draw fisrt point
-            // (outer circle)
-            nvgBeginPath(vg);
-            nvgCircle(vg, 100, 100, 10);
-            nvgFillColor(vg, nvgRGBA(156, 167, 185, 20));
-            nvgFill(vg);
-
-            // (inner circle)
-            nvgBeginPath(vg);
-            nvgCircle(vg, 100, 100, 5);
-            nvgFillColor(vg, nvgRGBA(156, 167, 185, 255));
-            nvgFill(vg);
-            */
-
-            // draw second point
-            // (outer circle)
-            /*
-            nvgBeginPath(vg);
-            nvgCircle(vg, 220, 120, 10);
-            nvgFillColor(vg, nvgRGBA(156, 167, 185, 20));
-            nvgFill(vg);
-
-            // (inner circle)
-            nvgBeginPath(vg);
-            nvgCircle(vg, 220, 120, 5);
-            nvgFillColor(vg, nvgRGBA(156, 167, 185, 255));
-            nvgFill(vg);
-            */
-
         }
 
         nvgRestore(vg);
@@ -581,6 +552,35 @@ struct TimelineSequencerWidget : TransparentWidget
     }
 };
 
+struct TimelineMiniMapWidget : TransparentWidget
+{
+    TransitionSequencer *module;
+
+    TimelineMiniMapWidget()
+    {
+        box.size = Vec(MINI_MAP_DRAW_AREA_WIDTH, MINI_MAP_DRAW_AREA_HEIGHT);
+    }
+
+    void draw(const DrawArgs &args) override
+    {
+        const auto vg = args.vg;
+
+        // Save the drawing context to restore later
+        nvgSave(vg);
+
+        if(module)
+        {
+            // testing draw area
+            nvgBeginPath(vg);
+            nvgRect(vg, 0, 0, MINI_MAP_DRAW_AREA_WIDTH, MINI_MAP_DRAW_AREA_HEIGHT);
+            nvgFillColor(vg, nvgRGBA(120, 120, 20, 100));
+            nvgFill(vg);
+        }
+
+        nvgRestore(vg);
+    }
+};
+
 struct TransitionSequencerWidget : ModuleWidget
 {
     TransitionSequencer* module;
@@ -631,6 +631,10 @@ struct TransitionSequencerWidget : ModuleWidget
 		timeline_sequencer_widget->module = module;
 		addChild(timeline_sequencer_widget);
 
+        TimelineMiniMapWidget *timeline_mini_map_widget = new TimelineMiniMapWidget();
+        timeline_mini_map_widget->box.pos = mm2px(Vec(MINI_MAP_POSITION_X, MINI_MAP_POSITION_Y));
+        timeline_mini_map_widget->module = module;
+        addChild(timeline_mini_map_widget);
 	}
 
 	void appendContextMenu(Menu *menu) override
