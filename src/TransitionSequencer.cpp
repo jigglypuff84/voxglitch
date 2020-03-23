@@ -6,6 +6,7 @@
 // x/y legends.
 // TODO: When hovering under or above a point, create a vertical line at that
 //  point.  If clicking in this state, reposition point up or down.
+// TODO: shift-click on existing point should remove it
 
 #include "plugin.hpp"
 #include "osdialog.h"
@@ -70,6 +71,11 @@ struct TimelineSequencer
     Vec getPoint(unsigned int index)
     {
         return(Vec(points[index].x, points[index].y));
+    }
+
+    void removePoint(unsigned int index)
+    {
+        points.erase(points.begin() + index);
     }
 
     std::pair<unsigned int, unsigned int> getPointIndexesWithinViewport()
@@ -426,86 +432,85 @@ struct TimelineSequencerWidget : TransparentWidget
 
             if(e.mods == GLFW_MOD_SHIFT)
             {
-                // TODO: replace drag_position in the followin line of code
-                // with the position computed given the draw window
 
-                unsigned int number_of_points = module->sequencer.points.size();
-                int insert_at_location = 0;
+                //
+                // If the user is mousing over a point while shift-clicking,
+                // the point will be removed
+                //
+                bool point_is_moused_over = false;
+                unsigned int point_index = 0;
 
-                if(number_of_points == 0)
+                std::tie(point_is_moused_over, point_index) = mousedOverPoint(e.pos);
+
+                if(point_is_moused_over)
                 {
-                    insert_at_location = 0;
+                    // Remove point
+                    //...
+                    module->sequencer.removePoint(point_index);
                 }
-                // If adding a point to the beginning
-                else if(drag_position.x < module->sequencer.points[0].x)
-                {
-                    insert_at_location = 0;
-                }
-                // If adding a point to the end
-                else if(drag_position.x > module->sequencer.points.back().x)
-                {
-                    insert_at_location = module->sequencer.points.size();
-                }
-                /*
-                else if(number_of_points == 1)
-                {
-                    if(drag_position.x < module->sequencer.points[0].x)
-                    {
-                        insert_at_location = 0;
-                        module->sequencer.points.insert(module->sequencer.points.begin(), drag_position);
-                    }
-                    else
-                    {
-                        insert_at_location = 1;
-                        module->sequencer.points.push_back(drag_position);
-                    }
-                }
-                */
-                // If adding a point somewhere in the middle
                 else
                 {
-                    for(std::size_t i=0; i<module->sequencer.points.size() - 1; i++)
+                    // Insert new point
+                    // TODO: replace drag_position in the followin line of code
+                    // with the position computed given the draw window
+
+                    unsigned int number_of_points = module->sequencer.points.size();
+                    int insert_at_location = 0;
+
+                    if(number_of_points == 0)
                     {
-                        if((drag_position.x > module->sequencer.points[i].x) && (drag_position.x < module->sequencer.points[i+1].x))
+                        insert_at_location = 0;
+                    }
+                    // If adding a point to the beginning
+                    else if(drag_position.x < module->sequencer.points[0].x)
+                    {
+                        insert_at_location = 0;
+                    }
+                    // If adding a point to the end
+                    else if(drag_position.x > module->sequencer.points.back().x)
+                    {
+                        insert_at_location = module->sequencer.points.size();
+                    }
+                    /*
+                    else if(number_of_points == 1)
+                    {
+                        if(drag_position.x < module->sequencer.points[0].x)
                         {
-                            insert_at_location = i + 1;
+                            insert_at_location = 0;
+                            module->sequencer.points.insert(module->sequencer.points.begin(), drag_position);
+                        }
+                        else
+                        {
+                            insert_at_location = 1;
+                            module->sequencer.points.push_back(drag_position);
                         }
                     }
+                    */
+                    // If adding a point somewhere in the middle
+                    else
+                    {
+                        for(std::size_t i=0; i<module->sequencer.points.size() - 1; i++)
+                        {
+                            if((drag_position.x > module->sequencer.points[i].x) && (drag_position.x < module->sequencer.points[i+1].x))
+                            {
+                                insert_at_location = i + 1;
+                            }
+                        }
+                    }
+
+
+                    // This cannot be done while iterating over the vector
+                    module->sequencer.points.insert(module->sequencer.points.begin() + insert_at_location, drag_position);
+
+                    // Begin dragging
+                    selected_point_index = insert_at_location;
+                    dragging_point = true;
                 }
-
-
-                // This cannot be done while iterating over the vector
-                module->sequencer.points.insert(module->sequencer.points.begin() + insert_at_location, drag_position);
-
-                // Begin dragging
-                selected_point_index = insert_at_location;
-                dragging_point = true;
             }
             else
             {
                 // see if the user is selecting a point
-                for(std::size_t i=0; i<module->sequencer.points.size(); i++)
-                {
-                    // for (std::pair<std::double, float> element : module->sequencer.points) {
-            		// Accessing KEY from element
-            		float time = module->sequencer.points[i].x;
-            		float cv_value = module->sequencer.points[i].y;
-
-                    // calculate position based on time and the position of the
-                    // drawing window.
-                    float draw_position_x = time;  // TODO: finish this
-                    float draw_position_y = cv_value;
-
-                    if(draw_position_x > (drag_position.x - 16) &&
-                        draw_position_x < (drag_position.x + 16) &&
-                        draw_position_y > (drag_position.y - 16) &&
-                        draw_position_y < (drag_position.y + 16)
-                    )
-                    {
-                        selected_point_index = i;
-                        dragging_point = true;
-                    }
-                }
+                std::tie(dragging_point, selected_point_index) = mousedOverPoint(e.pos);
             }
 		}
 
@@ -539,9 +544,14 @@ struct TimelineSequencerWidget : TransparentWidget
 		TransparentWidget::onHover(e);
 		e.consume(this);
 
-        // double zoom = std::pow(2.f, settings::zoom);
-		Vec hover_position = e.pos;
         hovering_over_point = false;
+        std::tie(hovering_over_point, hover_point_index) = mousedOverPoint(e.pos);
+	}
+
+    std::pair<bool, unsigned int> mousedOverPoint(Vec mouse_position)
+    {
+        unsigned int point_index = 0;
+        bool mouse_is_over_point = false;
 
         // TODO: change this to only iterate over visible points
         for(std::size_t i=0; i<module->sequencer.points.size(); i++)
@@ -556,17 +566,19 @@ struct TimelineSequencerWidget : TransparentWidget
             float point_position_x = time;  // TODO: finish this
             float point_position_y = cv_value;
 
-            if(point_position_x > (hover_position.x - 16) &&
-                point_position_x < (hover_position.x + 16) &&
-                point_position_y > (hover_position.y - 16) &&
-                point_position_y < (hover_position.y + 16)
+            if(point_position_x > (mouse_position.x - 16) &&
+                point_position_x < (mouse_position.x + 16) &&
+                point_position_y > (mouse_position.y - 16) &&
+                point_position_y < (mouse_position.y + 16)
             )
             {
-                hover_point_index = i;
-                hovering_over_point = true;
+                point_index = i;
+                mouse_is_over_point = true;
             }
         }
-	}
+
+        return { mouse_is_over_point, point_index };
+    }
 };
 
 struct TransitionSequencerWidget : ModuleWidget
