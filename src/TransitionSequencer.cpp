@@ -43,12 +43,21 @@ double voltage_ranges[NUMBER_OF_VOLTAGE_RANGES][2] = {
 };
 */
 
+struct TimelineSequencerViewport
+{
+    float width = DRAW_AREA_WIDTH;
+    float height = DRAW_AREA_HEIGHT;
+    float offset = 0;
+};
+
 struct TimelineSequencer
 {
     // "points" is a map with the keys representing milliseconds and the value
     // representing the VC value at that position in time.
     // std::map<double, float> points;
     std::vector<Vec> points;
+
+    TimelineSequencerViewport viewport;
 
     // constructor
     TimelineSequencer()
@@ -57,6 +66,50 @@ struct TimelineSequencer
         points.push_back(Vec(220, 120.00));
         points.push_back(Vec(300, 60.00));
     }
+
+    Vec getPoint(unsigned int index)
+    {
+        return(Vec(points[index].x, points[index].y));
+    }
+
+    std::pair<unsigned int, unsigned int> getPointIndexesWithinViewport()
+    {
+        unsigned int begin_index = 0;
+        unsigned int end_index = 0;
+
+        // I'm not claiming that my algorithm is the best, but do take notice
+        // that you can't say: if(begin_index == 0) begin_index = i; because
+        // begin_index will be 1 in the case that the first point is at index 0.
+        // This threw me for a while, so I thought I'd mention it.
+
+        bool begin_index_located = false;
+
+        for(std::size_t i=0; i < points.size(); i++)
+        {
+            /*
+            DEBUG("tests:");
+            DEBUG(std::to_string(points[i].x).c_str());
+            DEBUG(std::to_string(viewport.width).c_str());
+            DEBUG(std::to_string(viewport.offset).c_str());
+            */
+            if((points[i].x >= viewport.offset) && (points[i].x <= (viewport.offset + viewport.width)))
+            {
+                if(! begin_index_located)
+                {
+                    begin_index = i;
+                    begin_index_located = true;
+                }
+                end_index = i;
+            }
+            /*
+            DEBUG(std::to_string(begin_index).c_str());
+            DEBUG(std::to_string(end_index).c_str());
+            */
+        }
+        return { begin_index, end_index };
+    }
+
+
 };
 
 struct TransitionSequencer : Module
@@ -256,8 +309,13 @@ struct TimelineSequencerWidget : TransparentWidget
             float previous_x = -1;
             float previous_y = -1;
 
+            unsigned int start_index;
+            unsigned int end_index;
+
+            std::tie(start_index, end_index) = module->sequencer.getPointIndexesWithinViewport();
+
             // Draw all the lines first
-            for(std::size_t i=0; i < module->sequencer.points.size(); i++)
+            for(std::size_t i=start_index; i <= end_index; i++)
             {
                 // for (std::pair<std::double, float> element : module->sequencer.points) {
         		// Accessing KEY from element
@@ -286,8 +344,10 @@ struct TimelineSequencerWidget : TransparentWidget
             {
                 // for (std::pair<std::double, float> element : module->sequencer.points) {
         		// Accessing KEY from element
-        		float time = module->sequencer.points[i].x;
-        		float cv_value = module->sequencer.points[i].y;
+
+                Vec point = module->sequencer.getPoint(i);
+                float time = point.x;
+                float cv_value = point.y;
 
                 // calculate position based on time and the position of the
                 // drawing window.
