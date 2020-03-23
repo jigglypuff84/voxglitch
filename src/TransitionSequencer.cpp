@@ -77,9 +77,19 @@ struct TimelineSequencer
         return(Vec(points[index].x, points[index].y));
     }
 
+    Vec getPointPositionRelativeToViewport(unsigned int index)
+    {
+        return(Vec(points[index].x - viewport.offset, points[index].y));
+    }
+
     void removePoint(unsigned int index)
     {
         points.erase(points.begin() + index);
+    }
+
+    void setViewpointOffset(float offset)
+    {
+        viewport.offset = offset;
     }
 
     std::pair<unsigned int, unsigned int> getPointIndexesWithinViewport()
@@ -96,12 +106,6 @@ struct TimelineSequencer
 
         for(std::size_t i=0; i < points.size(); i++)
         {
-            /*
-            DEBUG("tests:");
-            DEBUG(std::to_string(points[i].x).c_str());
-            DEBUG(std::to_string(viewport.width).c_str());
-            DEBUG(std::to_string(viewport.offset).c_str());
-            */
             if((points[i].x >= viewport.offset) && (points[i].x <= (viewport.offset + viewport.width)))
             {
                 if(! begin_index_located)
@@ -111,15 +115,9 @@ struct TimelineSequencer
                 }
                 end_index = i;
             }
-            /*
-            DEBUG(std::to_string(begin_index).c_str());
-            DEBUG(std::to_string(end_index).c_str());
-            */
         }
         return { begin_index, end_index };
     }
-
-
 };
 
 struct TransitionSequencer : Module
@@ -327,6 +325,9 @@ struct TimelineSequencerWidget : TransparentWidget
             // Draw all the lines first
             for(std::size_t i=start_index; i <= end_index; i++)
             {
+                Vec position = module->sequencer.getPointPositionRelativeToViewport(i);
+
+                /*
                 // for (std::pair<std::double, float> element : module->sequencer.points) {
         		// Accessing KEY from element
         		float time = module->sequencer.points[i].x;
@@ -336,37 +337,31 @@ struct TimelineSequencerWidget : TransparentWidget
                 // drawing window.
                 float draw_position_x = time;  // TODO: finish this
                 float draw_position_y = cv_value;
+                */
 
                 if(previous_x >= 0)
                 {
                     nvgBeginPath(vg);
                     nvgMoveTo(vg, previous_x, previous_y);
-                	nvgLineTo(vg, draw_position_x, draw_position_y);
+                	nvgLineTo(vg, position.x, position.y);
                 	nvgStrokeColor(vg, nvgRGBA(156, 167, 185, 255));
                 	nvgStroke(vg);
                 }
 
-                previous_x = draw_position_x;
-                previous_y = draw_position_y;
+                previous_x = position.x;
+                previous_y = position.y;
             }
 
-            for(std::size_t i=0; i < module->sequencer.points.size(); i++)
+            for(std::size_t i=start_index; i <= end_index; i++)
             {
                 // for (std::pair<std::double, float> element : module->sequencer.points) {
         		// Accessing KEY from element
 
-                Vec point = module->sequencer.getPoint(i);
-                float time = point.x;
-                float cv_value = point.y;
-
-                // calculate position based on time and the position of the
-                // drawing window.
-                float draw_position_x = time;  // TODO: finish this
-                float draw_position_y = cv_value;
+                Vec position = module->sequencer.getPointPositionRelativeToViewport(i);
 
                 // (outer circle)
                 nvgBeginPath(vg);
-                nvgCircle(vg, draw_position_x, draw_position_y, 10);
+                nvgCircle(vg, position.x, position.y, 10);
                 nvgFillColor(vg, nvgRGBA(156, 167, 185, 20));
                 nvgFill(vg);
 
@@ -376,19 +371,17 @@ struct TimelineSequencerWidget : TransparentWidget
 
                 // (inner circle)
                 nvgBeginPath(vg);
-                nvgCircle(vg, draw_position_x, draw_position_y, 5);
+                nvgCircle(vg, position.x, position.y, 5);
                 nvgFillColor(vg, nvgRGBA(156, 167, 185, 255));
                 if(highlight_point) nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
                 nvgFill(vg);
-
-                // testing draw area
-
-                nvgBeginPath(vg);
-                nvgRect(vg, 0, 0, DRAW_AREA_WIDTH, DRAW_AREA_HEIGHT);
-                nvgFillColor(vg, nvgRGBA(120, 20, 20, 100));
-                nvgFill(vg);
-
         	}
+
+            // testing draw area
+            nvgBeginPath(vg);
+            nvgRect(vg, 0, 0, DRAW_AREA_WIDTH, DRAW_AREA_HEIGHT);
+            nvgFillColor(vg, nvgRGBA(120, 20, 20, 100));
+            nvgFill(vg);
         }
 
         nvgRestore(vg);
@@ -555,6 +548,7 @@ struct TimelineSequencerWidget : TransparentWidget
 struct TimelineMiniMapWidget : TransparentWidget
 {
     TransitionSequencer *module;
+    Vec drag_position;
 
     TimelineMiniMapWidget()
     {
@@ -578,6 +572,30 @@ struct TimelineMiniMapWidget : TransparentWidget
         }
 
         nvgRestore(vg);
+    }
+
+    void onButton(const event::Button &e) override
+    {
+		if(e.button == GLFW_MOUSE_BUTTON_LEFT && e.action == GLFW_PRESS)
+		{
+            e.consume(this);
+			drag_position = e.pos;
+			this->reposition(e.pos.x);
+		}
+	}
+
+    void onDragMove(const event::DragMove &e) override
+    {
+        TransparentWidget::onDragMove(e);
+        double zoom = std::pow(2.f, settings::zoom);
+		drag_position = drag_position.plus(e.mouseDelta.div(zoom));
+        this->reposition(drag_position.x);
+    }
+
+    void reposition(float x)
+    {
+        // DEBUG(std::to_string(x).c_str());
+        module->sequencer.setViewpointOffset(x);
     }
 };
 
