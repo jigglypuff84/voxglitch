@@ -398,10 +398,12 @@ struct TimelineSequencerWidget : TransparentWidget
         	}
 
             // testing draw area
+            /*
             nvgBeginPath(vg);
             nvgRect(vg, 0, 0, DRAW_AREA_WIDTH, DRAW_AREA_HEIGHT);
             nvgFillColor(vg, nvgRGBA(120, 20, 20, 100));
             nvgFill(vg);
+            */
         }
 
         nvgRestore(vg);
@@ -598,7 +600,7 @@ struct TimelineMiniMapWidget : TransparentWidget
 
             // draw window box
             nvgBeginPath(vg);
-            nvgRoundedRect(vg, window_box_position, 0, 32, MINI_MAP_DRAW_AREA_HEIGHT, 4);
+            nvgRoundedRect(vg, window_box_position, 0, 32, MINI_MAP_DRAW_AREA_HEIGHT, 3);
             nvgFillColor(vg, nvgRGBA(100, 100, 100, 150));
             nvgFill(vg);
         }
@@ -629,6 +631,8 @@ struct TimelineMiniMapWidget : TransparentWidget
         // DEBUG(std::to_string(x).c_str());
         float centered_position = x - 16;
         if(centered_position < 0) centered_position = 0;
+        if(centered_position > 472.76) centered_position = 472.76;
+        // DEBUG(std::to_string(centered_position).c_str());
 
         module->sequencer.setViewpointOffset(centered_position * 32);
         window_box_position = centered_position;
