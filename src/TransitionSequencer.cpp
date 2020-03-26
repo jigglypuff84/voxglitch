@@ -82,6 +82,26 @@ struct TimelineSequencer
         return(Vec(points[index].x - viewport.offset, points[index].y));
     }
 
+    Vec viewportFromIndex(Vec position)
+    {
+        return(Vec(position.x - viewport.offset, position.y));
+    }
+
+    float viewportFromIndex(float x)
+    {
+        return(x - viewport.offset);
+    }
+
+    Vec indexFromViewport(Vec position)
+    {
+        return(Vec(viewport.offset + position.x, position.y));
+    }
+
+    float indexFromViewport(float x)
+    {
+        return(x + viewport.offset);
+    }
+
     void removePoint(unsigned int index)
     {
         points.erase(points.begin() + index);
@@ -421,17 +441,19 @@ struct TimelineSequencerWidget : TransparentWidget
                     unsigned int number_of_points = module->sequencer.points.size();
                     int insert_at_location = 0;
 
+
+
                     if(number_of_points == 0)
                     {
                         insert_at_location = 0;
                     }
                     // If adding a point to the beginning
-                    else if(drag_position.x < module->sequencer.points[0].x)
+                    else if(drag_position.x < module->sequencer.viewportFromIndex(module->sequencer.points[0].x))
                     {
                         insert_at_location = 0;
                     }
                     // If adding a point to the end
-                    else if(drag_position.x > module->sequencer.points.back().x)
+                    else if(drag_position.x > module->sequencer.viewportFromIndex(module->sequencer.points.back().x))
                     {
                         insert_at_location = module->sequencer.points.size();
                     }
@@ -455,7 +477,10 @@ struct TimelineSequencerWidget : TransparentWidget
                     {
                         for(std::size_t i=0; i<module->sequencer.points.size() - 1; i++)
                         {
-                            if((drag_position.x > module->sequencer.points[i].x) && (drag_position.x < module->sequencer.points[i+1].x))
+                            float first_point_viewport_x = module->sequencer.viewportFromIndex(module->sequencer.points[i].x);
+                            float next_point_viewport_x = module->sequencer.viewportFromIndex(module->sequencer.points[i+1].x);
+
+                            if((drag_position.x > first_point_viewport_x) && (drag_position.x < next_point_viewport_x))
                             {
                                 insert_at_location = i + 1;
                             }
@@ -490,11 +515,16 @@ struct TimelineSequencerWidget : TransparentWidget
         double zoom = std::pow(2.f, settings::zoom);
 		drag_position = drag_position.plus(e.mouseDelta.div(zoom));
 
+        // The error is drag_position.
+
         if(dragging_point && module->sequencer.points.size() > 0)
         {
             // TODO: This will need to take into consideration the draw window
-            module->sequencer.points[selected_point_index].x = drag_position.x;
-            module->sequencer.points[selected_point_index].y = drag_position.y;
+            Vec point_position = module->sequencer.indexFromViewport(drag_position);
+            // module->sequencer.points[selected_point_index].x = point_position.x;
+            // module->sequencer.points[selected_point_index].y = point_position.y;
+
+            module->sequencer.points[selected_point_index] = point_position;
         }
 	}
 
@@ -520,20 +550,12 @@ struct TimelineSequencerWidget : TransparentWidget
         // TODO: change this to only iterate over visible points
         for(std::size_t i=0; i<module->sequencer.points.size(); i++)
         {
-            // for (std::pair<std::double, float> element : module->sequencer.points) {
-            // Accessing KEY from element
-            float time = module->sequencer.points[i].x;
-            float cv_value = module->sequencer.points[i].y;
+            Vec position = module->sequencer.viewportFromIndex(module->sequencer.points[i]);
 
-            // calculate position based on time and the position of the
-            // drawing window.
-            float point_position_x = time;  // TODO: finish this
-            float point_position_y = cv_value;
-
-            if(point_position_x > (mouse_position.x - 16) &&
-                point_position_x < (mouse_position.x + 16) &&
-                point_position_y > (mouse_position.y - 16) &&
-                point_position_y < (mouse_position.y + 16)
+            if(position.x > (mouse_position.x - 16) &&
+                position.x < (mouse_position.x + 16) &&
+                position.y > (mouse_position.y - 16) &&
+                position.y < (mouse_position.y + 16)
             )
             {
                 point_index = i;
