@@ -342,7 +342,31 @@ struct TimelineSequencerWidget : TransparentWidget
 
             std::tie(start_index, end_index) = module->sequencer.getPointIndexesWithinViewport();
 
+            // if(start_index > 0) start_index--;
+
+            //
             // Draw all the lines first
+            //
+
+            if (start_index > 0)
+            {
+                    // draw line from left side of the screen to the first point
+                    Vec position = module->sequencer.getPointPositionRelativeToViewport(i);
+                    Vec previous_position =  module->sequencer.getPointPositionRelativeToViewport(i-1);
+
+                    // Find angle
+                    float opposite = position.y - previous_position.y;
+                    float adjacent = position.x = previous_position.x;
+                    float tanget_of_theta = opposite/adjacent;
+                    float angle = atan(tanget_of_theta);
+
+                    // now use the angle to find
+                    opposite = position.x;
+                    adjacent = opposite / tanget_of_theta;
+
+
+            }
+
             for(std::size_t i=start_index; i <= end_index; i++)
             {
                 Vec position = module->sequencer.getPointPositionRelativeToViewport(i);
