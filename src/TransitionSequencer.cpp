@@ -563,20 +563,34 @@ struct TimelineSequencerWidget : TransparentWidget
     double zoom = std::pow(2.f, settings::zoom);
     drag_position = drag_position.plus(e.mouseDelta.div(zoom));
 
-    // The error is drag_position.
-
+    // IF the user is dragging a point
     if(dragging_point && module->sequencer.points.size() > 0)
     {
       Vec point_position = module->sequencer.indexFromViewport(drag_position);
-      module->sequencer.points[selected_point_index] = point_position;
+
+      if(selected_point_index > 0 )
+      {
+        if (point_position.x > module->sequencer.points[selected_point_index - 1].x)
+        {
+          module->sequencer.points[selected_point_index] = point_position;
+        }
+        else
+        {
+          module->sequencer.points[selected_point_index].x = module->sequencer.points[selected_point_index - 1].x;
+        }
+      }
+      else
+      {
+        Vec point_position = module->sequencer.indexFromViewport(drag_position);
+        module->sequencer.points[selected_point_index] = point_position;
+      }
     }
+    // Otherwise let the mouse drag the viewport offset
     else
     {
       float drag_x = e.mouseDelta.div(zoom).x;
       module->sequencer.setViewpointOffset(module->sequencer.getViewpointOffset() - drag_x);
     }
-
-
   }
 
   void onLeave(const event::Leave &e) override
