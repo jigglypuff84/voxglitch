@@ -31,7 +31,7 @@
 #define MINI_MAP_POSITION_Y 84.3
 #define MINI_MAP_DRAW_AREA_WIDTH 506.0
 #define MINI_MAP_DRAW_AREA_HEIGHT 32.1
-#define MINI_MAP_MULTIPLIER 16
+#define MINI_MAP_MULTIPLIER 1
 
 #define TOOLTIP_WIDTH 33.0
 #define TOOLTIP_HEIGHT 20.0
@@ -637,6 +637,7 @@ struct TimelineMiniMapWidget : TransparentWidget
   TransitionSequencer *module;
   Vec drag_position;
   float window_box_position;
+  float window_box_width = 32;
 
   TimelineMiniMapWidget()
   {
@@ -661,9 +662,12 @@ struct TimelineMiniMapWidget : TransparentWidget
       nvgFill(vg);
       */
 
+      // window_box_width = (MINI_MAP_DRAW_AREA_WIDTH / (module->sequencer.points.back().x + MINI_MAP_DRAW_AREA_WIDTH)) * MINI_MAP_DRAW_AREA_WIDTH;
+      // DEBUG(std::to_string(window_box_width).c_str());
+
       // draw window box
       nvgBeginPath(vg);
-      nvgRoundedRect(vg, window_box_position, 0, 32, MINI_MAP_DRAW_AREA_HEIGHT, 3);
+      nvgRoundedRect(vg, window_box_position, 0, window_box_width, MINI_MAP_DRAW_AREA_HEIGHT, 3);
       nvgFillColor(vg, nvgRGBA(100, 100, 100, 150));
       nvgFill(vg);
     }
