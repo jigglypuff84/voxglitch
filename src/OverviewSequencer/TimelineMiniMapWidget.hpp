@@ -35,8 +35,9 @@ struct TimelineMiniMapWidget : TransparentWidget
       float previous_x = -1;
       float previous_y = -1;
 
-      // window_box_width = (MINI_MAP_DRAW_AREA_WIDTH / (module->sequencer.points.back().x + MINI_MAP_DRAW_AREA_WIDTH)) * MINI_MAP_DRAW_AREA_WIDTH;
-      // DEBUG(std::to_string(window_box_width).c_str());
+      // TODO: I'm not sure if this is correct
+      // Even if it is, it will need to be variable later
+      float range_end = MINI_MAP_WINDOW_BOX_WIDTH * DRAW_AREA_WIDTH;
 
       unsigned int start_index;
       unsigned int end_index;
@@ -101,7 +102,7 @@ struct TimelineMiniMapWidget : TransparentWidget
     if(centered_position > 472.76) centered_position = 472.76;
     // DEBUG(std::to_string(centered_position).c_str());
 
-    module->sequencer.setViewpointOffset(centered_position * MINI_MAP_MULTIPLIER);
+    module->sequencer.setViewpointOffset(((x - (MINI_MAP_WINDOW_BOX_WIDTH / 2.0)) / MINI_MAP_WINDOW_BOX_WIDTH) * DRAW_AREA_WIDTH);
     window_box_position = centered_position;
   }
 };
