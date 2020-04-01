@@ -50,8 +50,8 @@
         "tags": ["Granular", "Sampler"]
     },
     {
-        "slug": "transitionsequencer",
-        "name": "Transition Sequencer",
+        "slug": "overviewsequencer",
+        "name": "Overview",
         "description": "CV sequencer for long modulations over time",
         "tags": ["Sequencer"]
     },
