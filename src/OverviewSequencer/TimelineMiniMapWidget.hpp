@@ -4,6 +4,7 @@ struct TimelineMiniMapWidget : TransparentWidget
   Vec drag_position;
   float window_box_position;
   float window_box_width = 32;
+  float content_offset = 0;
 
   // TODO: don't hard code these. :-)
   float range_start = 0;
@@ -24,7 +25,9 @@ struct TimelineMiniMapWidget : TransparentWidget
 
     if(module)
     {
-      // testing draw area
+      // Visualize draw area for development testing
+      // The draw area should be fine already, but keeping this code around
+      // just in case the front-panel design changes at some point.
       /*
       nvgBeginPath(vg);
       nvgRect(vg, 0, 0, MINI_MAP_DRAW_AREA_WIDTH, MINI_MAP_DRAW_AREA_HEIGHT);
@@ -32,6 +35,8 @@ struct TimelineMiniMapWidget : TransparentWidget
       nvgFill(vg);
       */
 
+      // Store previous points while iterating through points so that we can
+      // draw a line from the previous point to the current point
       float previous_x = -1;
       float previous_y = -1;
 
@@ -47,11 +52,25 @@ struct TimelineMiniMapWidget : TransparentWidget
 
       for(std::size_t i=start_index; i <= end_index; i++)
       {
-        //  Vec position = module->sequencer.getPointPositionRelativeToViewport(i);
+        // TODO: If not all of the points fit within the mini-map, draw the
+        // the minimap offset similar to the scroll feature in the Atom editor
+        //
+        // In order to offset the minimap, I'll probably need to calculate
+        // the total length of the minimap based on the last point x location
+        // of the sequence being shown.  The x-location of the last point can
+        // be found using: module->sequencer.points.back().x.  So the length
+        // of the minimap might be:
+        //
+        // Is this right?  I don't know.
+        // float minimap_length = module->sequencer.points.back().x / MINI_MAP_WINDOW_BOX_WIDTH;
+        //
+        // To log this, use:
+        // DEBUG(std::to_string(minimap_length).c_str());
+        //
 
         Vec position = module->sequencer.getPoint(i);
-        position.x = (position.x / DRAW_AREA_WIDTH) * MINI_MAP_WINDOW_BOX_WIDTH;
-        position.y = (position.y / DRAW_AREA_HEIGHT) * MINI_MAP_DRAW_AREA_HEIGHT;
+        position.x = ((position.x / DRAW_AREA_WIDTH) * MINI_MAP_WINDOW_BOX_WIDTH);
+        position.y = ((position.y / DRAW_AREA_HEIGHT) * MINI_MAP_DRAW_AREA_HEIGHT);
 
         if(previous_x >= 0)
         {
@@ -97,12 +116,16 @@ struct TimelineMiniMapWidget : TransparentWidget
   void reposition(float x)
   {
     // DEBUG(std::to_string(x).c_str());
-    float centered_position = x - 16;
+    float centered_position = x - (MINI_MAP_WINDOW_BOX_WIDTH / 2.0);
     if(centered_position < 0) centered_position = 0;
     if(centered_position > 472.76) centered_position = 472.76;
-    // DEBUG(std::to_string(centered_position).c_str());
-
-    module->sequencer.setViewpointOffset(((x - (MINI_MAP_WINDOW_BOX_WIDTH / 2.0)) / MINI_MAP_WINDOW_BOX_WIDTH) * DRAW_AREA_WIDTH);
     window_box_position = centered_position;
+
+    // The viewport offset refers to the larger screen at the top of the module that
+    // displays the sequence.  This code computes which "slice" of the sequence
+    // to show in the viewport.
+    float viewport_offset = ((x - (MINI_MAP_WINDOW_BOX_WIDTH / 2.0)) / MINI_MAP_WINDOW_BOX_WIDTH) * DRAW_AREA_WIDTH;
+    module->sequencer.setViewpointOffset(viewport_offset);
+
   }
 };
