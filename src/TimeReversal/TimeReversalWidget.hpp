@@ -3,7 +3,7 @@ struct TimeReversalWidget : ModuleWidget
   TimeReversalWidget(TimeReversal* module)
   {
     setModule(module);
-    setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/time_reversal.svg")));
+    setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/time_reversal_front_panel.svg")));
 
     // Cosmetic rack screws
 		//addChild(createWidget<ScrewSilver>(Vec(15, 0)));

@@ -11,7 +11,7 @@ struct TimeReversal : Module
 	enum InputIds {
     AUDIO_INPUT_LEFT,
     AUDIO_INPUT_RIGHT,
-    PLAYBACK_INPUT,    
+    PLAYBACK_INPUT,
 		NUM_INPUTS
 	};
 	enum OutputIds {
@@ -44,7 +44,7 @@ struct TimeReversal : Module
 	void process(const ProcessArgs &args) override
 	{
     // Read incoming audio into buffer
-    audio_buffer.push(inputs[AUDIO_INPUT_LEFT].getVoltage(), inputs[AUDIO_INPUT_RIGHT].getVoltage());
+    // audio_buffer.push(inputs[AUDIO_INPUT_LEFT].getVoltage(), inputs[AUDIO_INPUT_RIGHT].getVoltage());
 
   }
 };

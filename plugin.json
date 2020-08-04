@@ -80,6 +80,12 @@
         "tags": ["Sampler"]
     },
     {
+        "slug": "TimeReversal",
+        "name": "Time Reversal",
+        "description": "Clocked reverse playback effect",
+        "tags": ["Effect"]
+    },
+    {
         "slug": "wavbank",
         "name": "Wav Bank",
         "description": "Sample player that can load and switch between all .wav files in a folder.",
