@@ -1,0 +1,2 @@
+#define DRAW_AREA_WIDTH_PT 37.0f
+#define DRAW_AREA_HEIGHT_PT 250.0f
